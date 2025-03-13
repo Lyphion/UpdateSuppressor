@@ -16,3 +16,4 @@ commands:
   suppressor:
     description: Central command for suppressor
     usage: suppressor help
+    permission: suppressor.admin
