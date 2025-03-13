@@ -1,0 +1,18 @@
+name: UpdateSuppressor
+version: '${version}'
+main: dev.lyphium.suppressor.UpdateSuppressor
+api-version: '1.21'
+prefix: Suppressor
+load: POSTWORLD
+author: Lyphion
+description: Simple update suppressor plugin
+
+permissions:
+  suppressor.admin:
+    description: Admin permission
+    default: op
+
+commands:
+  suppressor:
+    description: Central command for suppressor
+    usage: suppressor help
