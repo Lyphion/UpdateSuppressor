@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.*;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +26,13 @@ public final class SuppressorCommand implements CommandExecutor, TabCompleter {
     @Getter(AccessLevel.PACKAGE)
     private final Map<String, SubCommand> subCommands;
 
-    public SuppressorCommand(@NotNull JavaPlugin plugin, @NotNull RegionManager regionManager) {
+    public SuppressorCommand(@NotNull RegionManager regionManager) {
         this.subCommands = new TreeMap<>(Map.of(
+                "add", new SuppressorAddCommand(regionManager),
+                "edit", new SuppressorEditCommand(regionManager),
+                "reload", new SuppressorReloadCommand(regionManager),
+                "remove", new SuppressorRemoveCommand(regionManager),
+                "toggle", new SuppressorToggleCommand(regionManager)
         ));
     }
 

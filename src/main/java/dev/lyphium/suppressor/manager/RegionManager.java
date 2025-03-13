@@ -2,6 +2,7 @@ package dev.lyphium.suppressor.manager;
 
 import dev.lyphium.suppressor.data.BlockPosition;
 import dev.lyphium.suppressor.data.SuppressorRegion;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -9,8 +10,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class RegionManager {
 
@@ -23,6 +23,9 @@ public final class RegionManager {
 
     private final Set<SuppressorRegion> regions = new HashSet<>();
     private final Set<BlockPosition> positionCache = new HashSet<>();
+
+    @Getter
+    private final List<UUID> showOutlines = new ArrayList<>();
 
     private BukkitTask saveTask;
 

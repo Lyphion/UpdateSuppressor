@@ -37,7 +37,7 @@ public final class UpdateSuppressor extends JavaPlugin {
     }
 
     private void registerCommands() {
-        new SuppressorCommand(this, regionManager)
+        new SuppressorCommand(regionManager)
                 .register(Objects.requireNonNull(getCommand("suppressor")));
     }
 
