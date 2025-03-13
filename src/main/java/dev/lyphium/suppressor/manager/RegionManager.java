@@ -4,13 +4,18 @@ import dev.lyphium.suppressor.data.BlockPosition;
 import dev.lyphium.suppressor.data.SuppressorRegion;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public final class RegionManager {
 
@@ -25,12 +30,14 @@ public final class RegionManager {
     private final Set<BlockPosition> positionCache = new HashSet<>();
 
     @Getter
-    private final List<UUID> showOutlines = new ArrayList<>();
+    private final Set<UUID> showOutlines = new HashSet<>();
 
     private BukkitTask saveTask;
 
     public RegionManager(@NotNull JavaPlugin plugin) {
         this.plugin = plugin;
+
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::handleOutlines, 5, 5);
     }
 
     public boolean addRegion(@NotNull SuppressorRegion region) {
@@ -108,5 +115,45 @@ public final class RegionManager {
 
     private void saveRegionsHandle() {
 
+    }
+
+    private void handleOutlines() {
+        for (final Player player : Bukkit.getOnlinePlayers()) {
+            if (!showOutlines.contains(player.getUniqueId()))
+                continue;
+
+            for (final SuppressorRegion region : regions) {
+                if (!region.world().equals(player.getWorld().getName()))
+                    continue;
+
+                // TODO Only show regions within range
+                showOutlines(player, region);
+            }
+        }
+    }
+
+    private void showOutlines(@NotNull Player player, @NotNull SuppressorRegion region) {
+        final Particle.DustOptions options = new Particle.DustOptions(Color.RED, 1);
+
+        for (int x = region.minX() + 1; x <= region.maxX(); x++) {
+            player.spawnParticle(Particle.DUST, x, region.minY(), region.minZ(), 1, options);
+            player.spawnParticle(Particle.DUST, x, region.maxY() + 1, region.minZ(), 1, options);
+            player.spawnParticle(Particle.DUST, x, region.minY(), region.maxZ() + 1, 1, options);
+            player.spawnParticle(Particle.DUST, x, region.maxY() + 1, region.maxZ() + 1, 1, options);
+        }
+
+        for (int y = region.minY(); y <= region.maxY() + 1; y++) {
+            player.spawnParticle(Particle.DUST, region.minX(), y, region.minZ(), 1, options);
+            player.spawnParticle(Particle.DUST, region.maxX() + 1, y, region.minZ(), 1, options);
+            player.spawnParticle(Particle.DUST, region.minX(), y, region.maxZ() + 1, 1, options);
+            player.spawnParticle(Particle.DUST, region.maxX() + 1, y, region.maxZ() + 1, 1, options);
+        }
+
+        for (int z = region.minZ() + 1; z <= region.maxZ(); z++) {
+            player.spawnParticle(Particle.DUST, region.minX(), region.minY(), z, 1, options);
+            player.spawnParticle(Particle.DUST, region.maxX() + 1, region.minY(), z, 1, options);
+            player.spawnParticle(Particle.DUST, region.minX(), region.maxY() + 1, z, 1, options);
+            player.spawnParticle(Particle.DUST, region.maxX() + 1, region.maxY() + 1, z, 1, options);
+        }
     }
 }
