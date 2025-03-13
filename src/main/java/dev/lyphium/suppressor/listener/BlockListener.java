@@ -22,7 +22,7 @@ public final class BlockListener implements Listener {
     private void onPhysics(@NotNull BlockPhysicsEvent event) {
         final Block block = event.getBlock();
 
-        if (regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
+        if (isInRegion(block)) {
             event.setCancelled(true);
         }
     }
@@ -36,7 +36,7 @@ public final class BlockListener implements Listener {
         if (block == null)
             return;
 
-        if (regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
+        if (isInRegion(block)) {
             event.setCancelled(true);
         }
     }
@@ -46,9 +46,7 @@ public final class BlockListener implements Listener {
         final Block from = event.getBlock();
         final Block to = event.getToBlock();
 
-        if (regionManager.isInRegion(from.getWorld().getName(), from.getX(), from.getY(), from.getZ())) {
-            event.setCancelled(true);
-        } else if (regionManager.isInRegion(to.getWorld().getName(), to.getX(), to.getY(), to.getZ())) {
+        if (isInRegion(from) || isInRegion(to)) {
             event.setCancelled(true);
         }
     }
@@ -57,7 +55,7 @@ public final class BlockListener implements Listener {
     private void onGrow(@NotNull BlockGrowEvent event) {
         final Block block = event.getBlock();
 
-        if (regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
+        if (isInRegion(block)) {
             event.setCancelled(true);
         }
     }
@@ -65,7 +63,7 @@ public final class BlockListener implements Listener {
     @EventHandler
     private void onGrow(@NotNull StructureGrowEvent event) {
         for (final BlockState block : event.getBlocks()) {
-            if (regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
+            if (isInRegion(block.getBlock())) {
                 event.setCancelled(true);
                 break;
             }
@@ -76,7 +74,7 @@ public final class BlockListener implements Listener {
     private void onFertilize(@NotNull BlockFertilizeEvent event) {
         final Block block = event.getBlock();
 
-        if (regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
+        if (isInRegion(block)) {
             event.setCancelled(true);
         }
     }
@@ -85,10 +83,32 @@ public final class BlockListener implements Listener {
     private void onAbsorb(@NotNull SpongeAbsorbEvent event) {
         final Block block = event.getBlock();
 
-        if (regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
+        if (isInRegion(block)) {
             event.setCancelled(true);
         }
 
-        event.getBlocks().removeIf(b -> regionManager.isInRegion(b.getWorld().getName(), b.getX(), b.getY(), b.getZ()));
+        event.getBlocks().removeIf(b -> isInRegion(b.getBlock()));
+    }
+
+    @EventHandler
+    private void onFade(@NotNull BlockFadeEvent event) {
+        final Block block = event.getBlock();
+
+        if (isInRegion(block)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    private void onDecay(@NotNull LeavesDecayEvent event) {
+        final Block block = event.getBlock();
+
+        if (isInRegion(block)) {
+            event.setCancelled(true);
+        }
+    }
+
+    private boolean isInRegion(Block block) {
+        return regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ());
     }
 }

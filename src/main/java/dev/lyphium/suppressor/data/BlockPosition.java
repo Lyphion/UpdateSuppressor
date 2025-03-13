@@ -1,4 +1,6 @@
 package dev.lyphium.suppressor.data;
 
-public record BlockPosition(String world, int x, int y, int z) {
+import org.jetbrains.annotations.NotNull;
+
+public record BlockPosition(@NotNull String world, int x, int y, int z) {
 }

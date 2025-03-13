@@ -30,6 +30,7 @@ public final class SuppressorCommand implements CommandExecutor, TabCompleter {
         this.subCommands = new TreeMap<>(Map.of(
                 "add", new SuppressorAddCommand(regionManager),
                 "edit", new SuppressorEditCommand(regionManager),
+                "help", new SuppressorHelpCommand(this),
                 "reload", new SuppressorReloadCommand(regionManager),
                 "remove", new SuppressorRemoveCommand(regionManager),
                 "toggle", new SuppressorToggleCommand(regionManager)

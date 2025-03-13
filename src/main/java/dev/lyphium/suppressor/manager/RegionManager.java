@@ -4,18 +4,17 @@ import dev.lyphium.suppressor.data.BlockPosition;
 import dev.lyphium.suppressor.data.SuppressorRegion;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.Particle;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.io.File;
+import java.util.*;
+import java.util.logging.Level;
 
 public final class RegionManager {
 
@@ -40,18 +39,44 @@ public final class RegionManager {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::handleOutlines, 5, 5);
     }
 
+    /**
+     * Add a new region to the pool.
+     *
+     * @param region Region to be added
+     * @return {@code true} if region was added.
+     */
     public boolean addRegion(@NotNull SuppressorRegion region) {
-        positionCache.clear();
+        final boolean success = regions.add(region);
+        if (success) {
+            positionCache.clear();
+            saveRegions();
+        }
 
-        return regions.add(region);
+        return success;
     }
 
+    /**
+     * Remove new region from the pool.
+     *
+     * @param region Region to be added
+     * @return {@code true} if region was added.
+     */
     public boolean removeRegion(@NotNull SuppressorRegion region) {
-        positionCache.clear();
+        final boolean success = regions.remove(region);
+        if (success) {
+            positionCache.clear();
+            saveRegions();
+        }
 
-        return regions.remove(region);
+        return success;
     }
 
+    /**
+     * Get first region where location is contained.
+     *
+     * @param location Location contained in the region
+     * @return Region of the location.
+     */
     public @Nullable SuppressorRegion getRegion(@NotNull Location location) {
         for (final SuppressorRegion region : regions) {
             if (region.contains(location)) {
@@ -62,6 +87,15 @@ public final class RegionManager {
         return null;
     }
 
+    /**
+     * Get first region where location is contained.
+     *
+     * @param world Name of the world
+     * @param x     X coordinate of the location
+     * @param y     Y coordinate of the location
+     * @param z     Z coordinate of the location
+     * @return Region of the location.
+     */
     public @Nullable SuppressorRegion getRegion(@NotNull String world, int x, int y, int z) {
         for (final SuppressorRegion region : regions) {
             if (region.contains(world, x, y, z)) {
@@ -72,6 +106,12 @@ public final class RegionManager {
         return null;
     }
 
+    /**
+     * Check if location is inside a region.
+     *
+     * @param location Location to test
+     * @return {@code true} if location is inside a region.
+     */
     public boolean isInRegion(@NotNull Location location) {
         final BlockPosition position = new BlockPosition(location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
 
@@ -86,6 +126,15 @@ public final class RegionManager {
         return true;
     }
 
+    /**
+     * Check if location is inside a region.
+     *
+     * @param world Name of the world
+     * @param x     X coordinate of the location
+     * @param y     Y coordinate of the location
+     * @param z     Z coordinate of the location
+     * @return {@code true} if location is inside a region.
+     */
     public boolean isInRegion(@NotNull String world, int x, int y, int z) {
         final BlockPosition position = new BlockPosition(world, x, y, z);
 
@@ -100,10 +149,35 @@ public final class RegionManager {
         return true;
     }
 
+    /**
+     * Load all regions from the config.
+     */
     public void loadRegions() {
+        regions.clear();
+        positionCache.clear();
 
+        final YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "regions.yml"));
+        for (final Object o : config.getList("regions", List.of())) {
+            if (!(o instanceof Map<?, ?> data)) {
+                continue;
+            }
+
+            final String world = (String) data.get("World");
+            final int minX = (int) data.get("MinX");
+            final int minY = (int) data.get("MinY");
+            final int minZ = (int) data.get("MinZ");
+            final int maxX = (int) data.get("MaxX");
+            final int maxY = (int) data.get("MaxY");
+            final int maxZ = (int) data.get("MaxZ");
+
+            final SuppressorRegion region = new SuppressorRegion(world, minX, minY, minZ, maxX, maxY, maxZ);
+            regions.add(region);
+        }
     }
 
+    /**
+     * Save all regions to the config.
+     */
     public void saveRegions() {
         if (saveTask != null)
             saveTask.cancel();
@@ -113,11 +187,43 @@ public final class RegionManager {
         saveTask = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, this::saveRegionsHandle, SAVE_DELAY);
     }
 
+    /**
+     * Save all regions to the config.
+     */
     private void saveRegionsHandle() {
+        final YamlConfiguration config = new YamlConfiguration();
 
+        final List<Map<?, ?>> data = new ArrayList<>();
+        for (final SuppressorRegion region : regions) {
+            final Map<String, Object> map = Map.of(
+                    "World", region.world(),
+                    "MinX", region.minX(),
+                    "MinY", region.minY(),
+                    "MinZ", region.minZ(),
+                    "MaxX", region.maxX(),
+                    "MaxY", region.maxY(),
+                    "MaxZ", region.maxZ()
+            );
+
+            data.add(map);
+        }
+
+        config.set("regions", data);
+
+        try {
+            config.save(new File(plugin.getDataFolder(), "regions.yml"));
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "Error saving regions", e);
+        }
     }
 
+    /**
+     * Show outline of regions to players, who enabled it.
+     */
     private void handleOutlines() {
+        if (showOutlines.isEmpty())
+            return;
+
         for (final Player player : Bukkit.getOnlinePlayers()) {
             if (!showOutlines.contains(player.getUniqueId()))
                 continue;
@@ -126,34 +232,8 @@ public final class RegionManager {
                 if (!region.world().equals(player.getWorld().getName()))
                     continue;
 
-                // TODO Only show regions within range
-                showOutlines(player, region);
+                region.showOutline(player);
             }
-        }
-    }
-
-    private void showOutlines(@NotNull Player player, @NotNull SuppressorRegion region) {
-        final Particle.DustOptions options = new Particle.DustOptions(Color.RED, 1);
-
-        for (int x = region.minX() + 1; x <= region.maxX(); x++) {
-            player.spawnParticle(Particle.DUST, x, region.minY(), region.minZ(), 1, options);
-            player.spawnParticle(Particle.DUST, x, region.maxY() + 1, region.minZ(), 1, options);
-            player.spawnParticle(Particle.DUST, x, region.minY(), region.maxZ() + 1, 1, options);
-            player.spawnParticle(Particle.DUST, x, region.maxY() + 1, region.maxZ() + 1, 1, options);
-        }
-
-        for (int y = region.minY(); y <= region.maxY() + 1; y++) {
-            player.spawnParticle(Particle.DUST, region.minX(), y, region.minZ(), 1, options);
-            player.spawnParticle(Particle.DUST, region.maxX() + 1, y, region.minZ(), 1, options);
-            player.spawnParticle(Particle.DUST, region.minX(), y, region.maxZ() + 1, 1, options);
-            player.spawnParticle(Particle.DUST, region.maxX() + 1, y, region.maxZ() + 1, 1, options);
-        }
-
-        for (int z = region.minZ() + 1; z <= region.maxZ(); z++) {
-            player.spawnParticle(Particle.DUST, region.minX(), region.minY(), z, 1, options);
-            player.spawnParticle(Particle.DUST, region.maxX() + 1, region.minY(), z, 1, options);
-            player.spawnParticle(Particle.DUST, region.minX(), region.maxY() + 1, z, 1, options);
-            player.spawnParticle(Particle.DUST, region.maxX() + 1, region.maxY() + 1, z, 1, options);
         }
     }
 }

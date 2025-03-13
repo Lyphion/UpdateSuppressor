@@ -2,6 +2,7 @@ package dev.lyphium.suppressor;
 
 import dev.lyphium.suppressor.command.SuppressorCommand;
 import dev.lyphium.suppressor.listener.BlockListener;
+import dev.lyphium.suppressor.listener.PlayerListener;
 import dev.lyphium.suppressor.manager.RegionManager;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.translation.GlobalTranslator;
@@ -32,7 +33,6 @@ public final class UpdateSuppressor extends JavaPlugin {
 
     @Override
     public void onDisable() {
-
         getLogger().info("Plugin deactivated");
     }
 
@@ -43,6 +43,7 @@ public final class UpdateSuppressor extends JavaPlugin {
 
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new BlockListener(regionManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(regionManager), this);
     }
 
     private void registerLanguages() {
