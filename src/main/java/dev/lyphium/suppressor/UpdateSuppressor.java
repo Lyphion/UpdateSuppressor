@@ -21,7 +21,6 @@ public final class UpdateSuppressor extends JavaPlugin {
     @Override
     public void onEnable() {
         regionManager = new RegionManager(this);
-
         regionManager.loadRegions();
 
         registerLanguages();

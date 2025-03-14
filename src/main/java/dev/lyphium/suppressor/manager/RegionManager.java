@@ -47,10 +47,8 @@ public final class RegionManager {
      */
     public boolean addRegion(@NotNull SuppressorRegion region) {
         final boolean success = regions.add(region);
-        if (success) {
-            positionCache.clear();
+        if (success)
             saveRegions();
-        }
 
         return success;
     }
@@ -158,9 +156,8 @@ public final class RegionManager {
 
         final YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "regions.yml"));
         for (final Object o : config.getList("regions", List.of())) {
-            if (!(o instanceof Map<?, ?> data)) {
+            if (!(o instanceof Map<?, ?> data))
                 continue;
-            }
 
             final String world = (String) data.get("World");
             final int minX = (int) data.get("MinX");
@@ -229,10 +226,9 @@ public final class RegionManager {
                 continue;
 
             for (final SuppressorRegion region : regions) {
-                if (!region.world().equals(player.getWorld().getName()))
-                    continue;
-
-                region.showOutline(player);
+                if (region.world().equals(player.getWorld().getName())) {
+                    region.showOutline(player);
+                }
             }
         }
     }

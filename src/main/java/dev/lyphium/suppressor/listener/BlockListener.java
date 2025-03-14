@@ -108,7 +108,7 @@ public final class BlockListener implements Listener {
         }
     }
 
-    private boolean isInRegion(Block block) {
+    private boolean isInRegion(@NotNull Block block) {
         return regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ());
     }
 }
