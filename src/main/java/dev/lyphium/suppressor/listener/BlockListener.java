@@ -8,18 +8,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.StructureGrowEvent;
-import org.jetbrains.annotations.NotNull;
 
 public final class BlockListener implements Listener {
 
     private final RegionManager regionManager;
 
-    public BlockListener(@NotNull RegionManager regionManager) {
+    public BlockListener(RegionManager regionManager) {
         this.regionManager = regionManager;
     }
 
     @EventHandler
-    private void onPhysics(@NotNull BlockPhysicsEvent event) {
+    private void onPhysics(BlockPhysicsEvent event) {
         final Block block = event.getBlock();
 
         if (isInRegion(block)) {
@@ -28,7 +27,7 @@ public final class BlockListener implements Listener {
     }
 
     @EventHandler
-    private void onInteract(@NotNull PlayerInteractEvent event) {
+    private void onInteract(PlayerInteractEvent event) {
         if (event.getAction() != Action.PHYSICAL)
             return;
 
@@ -42,7 +41,7 @@ public final class BlockListener implements Listener {
     }
 
     @EventHandler
-    private void onBlockMove(@NotNull BlockFromToEvent event) {
+    private void onBlockMove(BlockFromToEvent event) {
         final Block from = event.getBlock();
         final Block to = event.getToBlock();
 
@@ -52,7 +51,7 @@ public final class BlockListener implements Listener {
     }
 
     @EventHandler
-    private void onGrow(@NotNull BlockGrowEvent event) {
+    private void onGrow(BlockGrowEvent event) {
         final Block block = event.getBlock();
 
         if (isInRegion(block)) {
@@ -61,7 +60,7 @@ public final class BlockListener implements Listener {
     }
 
     @EventHandler
-    private void onGrow(@NotNull StructureGrowEvent event) {
+    private void onGrow(StructureGrowEvent event) {
         for (final BlockState block : event.getBlocks()) {
             if (isInRegion(block.getBlock())) {
                 event.setCancelled(true);
@@ -71,7 +70,7 @@ public final class BlockListener implements Listener {
     }
 
     @EventHandler
-    private void onFertilize(@NotNull BlockFertilizeEvent event) {
+    private void onFertilize(BlockFertilizeEvent event) {
         final Block block = event.getBlock();
 
         if (isInRegion(block)) {
@@ -80,7 +79,7 @@ public final class BlockListener implements Listener {
     }
 
     @EventHandler
-    private void onAbsorb(@NotNull SpongeAbsorbEvent event) {
+    private void onAbsorb(SpongeAbsorbEvent event) {
         final Block block = event.getBlock();
 
         if (isInRegion(block)) {
@@ -91,7 +90,7 @@ public final class BlockListener implements Listener {
     }
 
     @EventHandler
-    private void onFade(@NotNull BlockFadeEvent event) {
+    private void onFade(BlockFadeEvent event) {
         final Block block = event.getBlock();
 
         if (isInRegion(block)) {
@@ -100,7 +99,7 @@ public final class BlockListener implements Listener {
     }
 
     @EventHandler
-    private void onDecay(@NotNull LeavesDecayEvent event) {
+    private void onDecay(LeavesDecayEvent event) {
         final Block block = event.getBlock();
 
         if (isInRegion(block)) {
@@ -108,7 +107,7 @@ public final class BlockListener implements Listener {
         }
     }
 
-    private boolean isInRegion(@NotNull Block block) {
+    private boolean isInRegion(Block block) {
         return regionManager.isInRegion(block.getWorld().getName(), block.getX(), block.getY(), block.getZ());
     }
 }

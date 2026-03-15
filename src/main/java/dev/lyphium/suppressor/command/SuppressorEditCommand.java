@@ -1,85 +1,75 @@
 package dev.lyphium.suppressor.command;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.lyphium.suppressor.data.SuppressorRegion;
 import dev.lyphium.suppressor.manager.RegionManager;
-import dev.lyphium.suppressor.util.ColorConstants;
-import dev.lyphium.suppressor.util.TextConstants;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.BlockPositionResolver;
+import io.papermc.paper.math.BlockPosition;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
+@SuppressWarnings("UnstableApiUsage")
 public final class SuppressorEditCommand implements SubCommand {
+
+    @Getter
+    private final String name = "edit";
+
+    @Getter
+    private final Component description = Component.translatable("suppressor.command.suppressor.edit.description");
 
     private final RegionManager regionManager;
 
-    public SuppressorEditCommand(@NotNull RegionManager regionManager) {
+    public SuppressorEditCommand(RegionManager regionManager) {
         this.regionManager = regionManager;
     }
 
-    @Override
-    public boolean handleCommand(@NotNull CommandSender sender, @NotNull String @NotNull [] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(TextConstants.PREFIX.append(Component.translatable("command.suppressor.error.only_player", ColorConstants.WARNING)));
-            return true;
-        }
+    public LiteralCommandNode<CommandSourceStack> construct() {
+        return Commands.literal(name)
+                .then(Commands.argument("pos1", ArgumentTypes.blockPosition())
+                        .then(Commands.argument("pos2", ArgumentTypes.blockPosition())
+                                .executes(ctx -> {
+                                    final CommandSender executor = SubCommand.getExecutor(ctx);
 
-        // Check if arguments have the right amount of members
-        if (args.length != 6)
-            return false;
+                                    final BlockPosition pos1 = ctx.getArgument("pos1", BlockPositionResolver.class).resolve(ctx.getSource());
+                                    final BlockPosition pos2 = ctx.getArgument("pos2", BlockPositionResolver.class).resolve(ctx.getSource());
 
-        // Check if provided numbers are valid
-        if (!args[0].matches("[+-]?\\d+") || !args[1].matches("[+-]?\\d+") || !args[2].matches("[+-]?\\d+")
-                || !args[3].matches("[+-]?\\d+") || !args[4].matches("[+-]?\\d+") || !args[5].matches("[+-]?\\d+")) {
-            sender.sendMessage(TextConstants.PREFIX.append(Component.translatable("command.suppressor.error.invalid_format", ColorConstants.ERROR)));
-            return true;
-        }
+                                    final int minX = Math.min(pos1.blockX(), pos2.blockX());
+                                    final int maxX = Math.max(pos1.blockX(), pos2.blockX());
+                                    final int minY = Math.min(pos1.blockY(), pos2.blockY());
+                                    final int maxY = Math.max(pos1.blockY(), pos2.blockY());
+                                    final int minZ = Math.min(pos1.blockZ(), pos2.blockZ());
+                                    final int maxZ = Math.max(pos1.blockZ(), pos2.blockZ());
 
-        final int x1 = Integer.parseInt(args[0]);
-        final int y1 = Integer.parseInt(args[1]);
-        final int z1 = Integer.parseInt(args[2]);
-        final int x2 = Integer.parseInt(args[3]);
-        final int y2 = Integer.parseInt(args[4]);
-        final int z2 = Integer.parseInt(args[5]);
+                                    final Location location = ctx.getSource().getLocation();
+                                    final World world = location.getWorld();
 
-        final int minX = Math.min(x1, x2);
-        final int maxX = Math.max(x1, x2);
-        final int minY = Math.min(y1, y2);
-        final int maxY = Math.max(y1, y2);
-        final int minZ = Math.min(z1, z2);
-        final int maxZ = Math.max(z1, z2);
+                                    final SuppressorRegion newRegion = new SuppressorRegion(world.getName(), minX, minY, minZ, maxX, maxY, maxZ);
+                                    final SuppressorRegion oldRegion = regionManager.getRegion(location);
 
-        final SuppressorRegion newRegion = new SuppressorRegion(player.getWorld().getName(), minX, minY, minZ, maxX, maxY, maxZ);
-        final SuppressorRegion oldRegion = regionManager.getRegion(player.getLocation());
+                                    if (oldRegion == null) {
+                                        executor.sendMessage(Component.translatable("suppressor.chat.prefix").append(Component.translatable("suppressor.command.suppressor.edit.unknown")));
+                                        return Command.SINGLE_SUCCESS;
+                                    }
 
-        if (oldRegion == null) {
-            sender.sendMessage(TextConstants.PREFIX.append(Component.translatable("command.suppressor.edit.unknown", ColorConstants.ERROR)));
-            return true;
-        }
+                                    regionManager.removeRegion(oldRegion);
+                                    final boolean success = regionManager.addRegion(newRegion);
+                                    if (success) {
+                                        executor.sendMessage(Component.translatable("suppressor.chat.prefix").append(Component.translatable("suppressor.command.suppressor.edit.success")));
+                                    } else {
+                                        executor.sendMessage(Component.translatable("suppressor.chat.prefix").append(Component.translatable("suppressor.command.suppressor.edit.duplicate")));
+                                    }
 
-        regionManager.removeRegion(oldRegion);
-        final boolean success = regionManager.addRegion(newRegion);
-        if (success) {
-            sender.sendMessage(TextConstants.PREFIX.append(Component.translatable("command.suppressor.edit.success", ColorConstants.SUCCESS)));
-        } else {
-            sender.sendMessage(TextConstants.PREFIX.append(Component.translatable("command.suppressor.edit.duplicate", ColorConstants.ERROR)));
-        }
-
-        return true;
-    }
-
-    @Override
-    public List<String> handleTabComplete(@NotNull CommandSender sender, @NotNull String @NotNull [] args) {
-        if (!(sender instanceof Player player))
-            return List.of();
-
-        return switch (args.length) {
-            case 1, 4 -> List.of(String.valueOf(player.getLocation().getBlockX()));
-            case 2, 5 -> List.of(String.valueOf(player.getLocation().getBlockY()));
-            case 3, 6 -> List.of(String.valueOf(player.getLocation().getBlockZ()));
-            default -> List.of();
-        };
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+                )
+                .build();
     }
 }

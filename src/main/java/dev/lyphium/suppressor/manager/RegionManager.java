@@ -9,8 +9,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -31,9 +30,10 @@ public final class RegionManager {
     @Getter
     private final Set<UUID> showOutlines = new HashSet<>();
 
+    @Nullable
     private BukkitTask saveTask;
 
-    public RegionManager(@NotNull JavaPlugin plugin) {
+    public RegionManager(JavaPlugin plugin) {
         this.plugin = plugin;
 
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::handleOutlines, 5, 5);
@@ -45,7 +45,7 @@ public final class RegionManager {
      * @param region Region to be added
      * @return {@code true} if region was added.
      */
-    public boolean addRegion(@NotNull SuppressorRegion region) {
+    public boolean addRegion(SuppressorRegion region) {
         final boolean success = regions.add(region);
         if (success)
             saveRegions();
@@ -59,7 +59,7 @@ public final class RegionManager {
      * @param region Region to be added
      * @return {@code true} if region was added.
      */
-    public boolean removeRegion(@NotNull SuppressorRegion region) {
+    public boolean removeRegion(SuppressorRegion region) {
         final boolean success = regions.remove(region);
         if (success) {
             positionCache.clear();
@@ -75,7 +75,7 @@ public final class RegionManager {
      * @param location Location contained in the region
      * @return Region of the location.
      */
-    public @Nullable SuppressorRegion getRegion(@NotNull Location location) {
+    public @Nullable SuppressorRegion getRegion(Location location) {
         for (final SuppressorRegion region : regions) {
             if (region.contains(location)) {
                 return region;
@@ -94,7 +94,7 @@ public final class RegionManager {
      * @param z     Z coordinate of the location
      * @return Region of the location.
      */
-    public @Nullable SuppressorRegion getRegion(@NotNull String world, int x, int y, int z) {
+    public @Nullable SuppressorRegion getRegion(String world, int x, int y, int z) {
         for (final SuppressorRegion region : regions) {
             if (region.contains(world, x, y, z)) {
                 return region;
@@ -110,7 +110,7 @@ public final class RegionManager {
      * @param location Location to test
      * @return {@code true} if location is inside a region.
      */
-    public boolean isInRegion(@NotNull Location location) {
+    public boolean isInRegion(Location location) {
         final BlockPosition position = new BlockPosition(location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
 
         if (positionCache.contains(position))
@@ -133,7 +133,7 @@ public final class RegionManager {
      * @param z     Z coordinate of the location
      * @return {@code true} if location is inside a region.
      */
-    public boolean isInRegion(@NotNull String world, int x, int y, int z) {
+    public boolean isInRegion(String world, int x, int y, int z) {
         final BlockPosition position = new BlockPosition(world, x, y, z);
 
         if (positionCache.contains(position))

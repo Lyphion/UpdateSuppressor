@@ -4,14 +4,14 @@ import dev.lyphium.suppressor.command.SuppressorCommand;
 import dev.lyphium.suppressor.listener.BlockListener;
 import dev.lyphium.suppressor.listener.PlayerListener;
 import dev.lyphium.suppressor.manager.RegionManager;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.minimessage.translation.MiniMessageTranslationStore;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.TranslationRegistry;
-import net.kyori.adventure.util.UTF8ResourceBundleControl;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Locale;
-import java.util.Objects;
 import java.util.ResourceBundle;
 
 public final class UpdateSuppressor extends JavaPlugin {
@@ -36,8 +36,12 @@ public final class UpdateSuppressor extends JavaPlugin {
     }
 
     private void registerCommands() {
-        new SuppressorCommand(regionManager)
-                .register(Objects.requireNonNull(getCommand("suppressor")));
+        this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
+            final Commands registrar = commands.registrar();
+
+            final SuppressorCommand command = new SuppressorCommand(regionManager);
+            registrar.register(command.construct(), SuppressorCommand.DESCRIPTION);
+        });
     }
 
     private void registerListeners() {
@@ -46,14 +50,14 @@ public final class UpdateSuppressor extends JavaPlugin {
     }
 
     private void registerLanguages() {
-        final TranslationRegistry registry = TranslationRegistry.create(Key.key("suppressor"));
-        registry.defaultLocale(Locale.ENGLISH);
+        final MiniMessageTranslationStore store = MiniMessageTranslationStore.create(Key.key("suppressor"));
+        store.defaultLocale(Locale.ENGLISH);
 
-        ResourceBundle bundle = ResourceBundle.getBundle("suppressor", Locale.ENGLISH, UTF8ResourceBundleControl.get());
-        registry.registerAll(Locale.ENGLISH, bundle, true);
-        bundle = ResourceBundle.getBundle("suppressor", Locale.GERMAN, UTF8ResourceBundleControl.get());
-        registry.registerAll(Locale.GERMAN, bundle, true);
+        ResourceBundle bundle = ResourceBundle.getBundle("suppressor", Locale.ENGLISH);
+        store.registerAll(Locale.ENGLISH, bundle, true);
+        bundle = ResourceBundle.getBundle("suppressor", Locale.GERMAN);
+        store.registerAll(Locale.GERMAN, bundle, true);
 
-        GlobalTranslator.translator().addSource(registry);
+        GlobalTranslator.translator().addSource(store);
     }
 }

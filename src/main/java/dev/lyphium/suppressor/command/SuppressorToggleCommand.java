@@ -1,49 +1,48 @@
 package dev.lyphium.suppressor.command;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.lyphium.suppressor.manager.RegionManager;
-import dev.lyphium.suppressor.util.ColorConstants;
-import dev.lyphium.suppressor.util.TextConstants;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.UUID;
 
 public final class SuppressorToggleCommand implements SubCommand {
 
+    @Getter
+    private final String name = "toggle";
+
+    @Getter
+    private final Component description = Component.translatable("suppressor.command.suppressor.toggle.description");
+
     private final RegionManager regionManager;
 
-    public SuppressorToggleCommand(@NotNull RegionManager regionManager) {
+    public SuppressorToggleCommand(RegionManager regionManager) {
         this.regionManager = regionManager;
     }
 
-    @Override
-    public boolean handleCommand(@NotNull CommandSender sender, @NotNull String @NotNull [] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(TextConstants.PREFIX.append(Component.translatable("command.suppressor.error.only_player", ColorConstants.WARNING)));
-            return true;
-        }
+    public LiteralCommandNode<CommandSourceStack> construct() {
+        return Commands.literal(name)
+                .requires(s -> s.getExecutor() instanceof Player)
+                .executes(ctx -> {
+                    if (!(ctx.getSource().getExecutor() instanceof Player player))
+                        return Command.SINGLE_SUCCESS;
 
-        // Check if arguments have the right amount of members
-        if (args.length != 0)
-            return false;
+                    final UUID uuid = player.getUniqueId();
+                    if (regionManager.getShowOutlines().contains(uuid)) {
+                        regionManager.getShowOutlines().remove(uuid);
+                        player.sendMessage(Component.translatable("suppressor.chat.prefix").append(Component.translatable("suppressor.command.suppressor.toggle.hide")));
+                    } else {
+                        regionManager.getShowOutlines().add(uuid);
+                        player.sendMessage(Component.translatable("suppressor.chat.prefix").append(Component.translatable("suppressor.command.suppressor.toggle.show")));
+                    }
 
-        final UUID uuid = player.getUniqueId();
-        if (regionManager.getShowOutlines().contains(uuid)) {
-            regionManager.getShowOutlines().remove(uuid);
-            sender.sendMessage(TextConstants.PREFIX.append(Component.translatable("command.suppressor.toggle.hide", ColorConstants.ERROR)));
-        } else {
-            regionManager.getShowOutlines().add(uuid);
-            sender.sendMessage(TextConstants.PREFIX.append(Component.translatable("command.suppressor.toggle.show", ColorConstants.SUCCESS)));
-        }
-
-        return true;
-    }
-
-    @Override
-    public List<String> handleTabComplete(@NotNull CommandSender sender, @NotNull String @NotNull [] args) {
-        return List.of();
+                    return Command.SINGLE_SUCCESS;
+                })
+                .build();
     }
 }

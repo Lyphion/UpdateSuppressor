@@ -1,10 +1,12 @@
 package dev.lyphium.suppressor.command;
 
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Command with is part of another one.
@@ -12,21 +14,44 @@ import java.util.List;
 public interface SubCommand {
 
     /**
-     * Handler when executing the sub command.
+     * Get the name of the sub command.
      *
-     * @param sender Executor of the command
-     * @param args   Additional parameter of the command
-     * @return {@code true} if command was executed successfully.
+     * @return Name of the command.
      */
-    boolean handleCommand(@NotNull CommandSender sender, @NotNull String @NotNull [] args);
+    String getName();
 
     /**
-     * Handler for receiving tab completion list.
+     * Minimum required permission to run the command. Or {@code null} if no permission is needed.
      *
-     * @param sender Executor of the command
-     * @param args   Additional parameter of the command
-     * @return List of possible completions or {@code null} for online players.
+     * @return Minimum permission to run the command.
+     * @implNote Default value is {@code null}.
      */
-    @Nullable List<String> handleTabComplete(@NotNull CommandSender sender, @NotNull String @NotNull [] args);
+    default @Nullable String getMinimumPermission() {
+        return null;
+    }
+
+    /**
+     * Get the description of the sub command.
+     *
+     * @return Description of the command.
+     */
+    Component getDescription();
+
+    /**
+     * Construct the command.
+     *
+     * @return Constructed command.
+     */
+    LiteralCommandNode<CommandSourceStack> construct();
+
+    /**
+     * Helper method to get the executor of the command.
+     *
+     * @param ctx Context of the command
+     * @return Executor of the command.
+     */
+    static CommandSender getExecutor(CommandContext<CommandSourceStack> ctx) {
+        return ctx.getSource().getExecutor() == null ? ctx.getSource().getSender() : ctx.getSource().getExecutor();
+    }
 
 }

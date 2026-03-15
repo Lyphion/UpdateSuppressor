@@ -4,15 +4,14 @@ import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
 
-public record SuppressorRegion(@NotNull String world, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, @NotNull Color color) {
+public record SuppressorRegion(String world, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Color color) {
 
     private static final Random random = new Random(0);
 
-    public SuppressorRegion(@NotNull String world, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+    public SuppressorRegion(String world, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         this(world, minX, minY, minZ, maxX, maxY, maxZ, Color.fromRGB(java.awt.Color.HSBtoRGB(random.nextFloat(), 1, 1) & 0xFFFFFF));
     }
 
@@ -25,7 +24,7 @@ public record SuppressorRegion(@NotNull String world, int minX, int minY, int mi
      * @param z     Z coordinate of the location
      * @return {@code true} if location is inside the region.
      */
-    public boolean contains(@NotNull String world, int x, int y, int z) {
+    public boolean contains(String world, int x, int y, int z) {
         return this.world.equals(world) && x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
     }
 
@@ -35,7 +34,7 @@ public record SuppressorRegion(@NotNull String world, int minX, int minY, int mi
      * @param location Location to test
      * @return {@code true} if location is inside the region.
      */
-    public boolean contains(@NotNull Location location) {
+    public boolean contains(Location location) {
         return contains(location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
@@ -44,7 +43,7 @@ public record SuppressorRegion(@NotNull String world, int minX, int minY, int mi
      *
      * @param player Player to show outline.
      */
-    public void showOutline(@NotNull Player player) {
+    public void showOutline(Player player) {
         final Particle.DustOptions options = new Particle.DustOptions(color, 1);
 
         for (int x = minX + 1; x <= maxX; x++) {
